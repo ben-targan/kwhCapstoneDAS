@@ -1,0 +1,373 @@
+#!/usr/bin/python
+
+# Copyright (c) 2007-2010, Simon Lipp
+# 
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+import pprint
+import dbus
+import collections
+import optparse
+
+import lxml.etree
+
+class Signature(dbus.Signature):
+	""" Subclass of dbus.Signature which adds a __str__ method (human-readable signature) """
+	
+	_dbus_types_names = {
+		"y": "Byte",
+		"b": "Boolean",
+		"n": "Int16",
+		"q": "UInt16",
+		"i": "Int32",
+		"u": "UInt32",
+		"x": "Int64",
+		"t": "UInt64",
+		"d": "Double",
+		"s": "String",
+		"o": "ObjectPath",
+		"g": "Signature",
+		"v": "Variant" }
+	
+	def __iter__(self):
+		return (Signature(x) for x in dbus.Signature.__iter__(self))
+	
+	def _container_type(self):
+		if self.startswith("("): return dbus.Struct
+		elif self.startswith("a{"): return dbus.Dictionary
+		elif self.startswith("a"): return dbus.Array
+		else: return None
+	
+	def _container_content(self):
+		if self._container_type() == dbus.Struct: return Signature(self[1:-1])
+		elif self._container_type() == dbus.Dictionary: return Signature(self[2:-1])
+		elif self._container_type() == dbus.Array: return Signature(self[1:])
+		else: return None
+	
+	def __str__(self):
+		if len(tuple(self)) > 1:
+			return ", ".join(self)
+		
+		t, c = self._container_type(), self._container_content()
+		if t is None:
+			return self._dbus_types_names[self[0]]
+		else:
+			if t == dbus.Array:
+				return str(c) + "[]"
+			else:
+				return t.__name__ + " {" + str(c) + "}"
+	
+	def pprint(self, name):
+		""" Retuns the argument in a human-readable form, e.g. "Int32[] myArray" """
+		
+		x = str(self)
+		if name:
+			x += " " + name
+		return x
+
+def generator_is_empty(generator):
+	""" Returns true if the given generator (or iterator) is empty """
+	try:
+		x = generator.next()
+		return False
+	except StopIteration:
+		return True
+
+class Callable(object):
+	""" A signal or a method """
+	
+	Argument = collections.namedtuple("Argument", "name signature")
+	
+	def __init__(self, xml):
+		self.name = xml.get('name') or ""
+		self.args_in = []
+		self.args_out = []
+		self._signal = (xml.tag == "signal")
+		for arg in xml.findall('arg'):
+			arg_obj = Callable.Argument(arg.get("name") or "", Signature(arg.get("type")))
+			dir = arg.get("direction")
+			if dir is None:
+				if self._signal:
+					dir = "out"
+				else:
+					dir = "in"
+			if dir == "in":
+				self.args_in.append(arg_obj)
+			else:
+				self.args_out.append(arg_obj)
+	
+	def pprint(self):
+		""" Returns the callable signature in a human-readable form, e.g "void foo(Int16 x)" """
+		
+		rpart = ", ".join(a.signature.pprint(a.name) for a in self.args_in)
+		if self._signal:
+			lpart = "signal"
+			rpart = ", ".join(a.signature.pprint(a.name) for a in self.args_out)
+		elif len(self.args_out) == 0:
+			lpart = "void"
+		elif len(self.args_out) == 1 and not self.args_out[0].name:
+			lpart = str(self.args_out[0].signature)
+		elif len(self.args_out) != 0:
+			lpart = "(%s)" % ", ".join(a.signature.pprint(a.name) for a in self.args_out)
+		
+		return "%s %s(%s)" % (lpart, self.name, rpart)
+
+
+class Interface(object):
+	""" An interface is a set of methods and signals """
+	
+	def __init__(self, xml):
+		self.name = xml.get('name')
+		self.methods = []
+		self.signals = []
+		
+		for method in xml.findall("method"):
+			self.methods.append(Callable(method))
+		for signal in xml.findall("signal"):
+			self.signals.append(Callable(signal))
+
+	def is_empty(self, check_for_signals = True):
+		if check_for_signals and self.signals:
+			return False
+		if self.methods:
+			return False
+		return True
+
+class Object(object):
+	""" Introspected object. This is a set of interfaces and children objects. """
+	
+	def __init__(self, bus, service, path):
+		self.bus = bus
+		self.service = service
+		self.path = path
+		self._object = None
+		self._interfaces = None
+		self._children = None
+	
+	@property
+	def object(self):
+		if not self._object:
+			self._object = self.bus.get_object(self.service, self.path)
+		return self._object
+	
+	@property
+	def interfaces(self):
+		if self._interfaces is None:
+			self._introspect()
+		return self._interfaces
+	
+	@property
+	def children(self):
+		if self._children is None:
+			self._introspect()
+		return self._children
+	
+	def is_empty(self, check_for_signals = True, recursive = True):
+		# Check wether an object has a method or a signal (only if check_for_signals is True)
+		# If recursive is True, then it will also return True if the object don't has any method nor signal but one of its child has
+		empty = True
+		for iface in self.interfaces:
+			if not iface.is_empty(check_for_signals):
+				empty = False
+				break
+		
+		if empty is False:
+			return False
+		elif not recursive:
+			return True
+		
+		for child in self.children:
+			if not child.is_empty(check_for_signals, recursive):
+				empty = False
+				break
+		
+		return empty
+	
+	def resolve_method(self, name):
+		""" Find an (interface, method) from "name". """
+		
+		if "." in name:
+			ifname, name = name.rsplit(".", 1)
+		else:
+			ifname = None
+
+		for iface in self.interfaces:
+			if iface.name == ifname or ifname is None:
+				for method in iface.methods:
+					if method.name == name:
+						return iface, method
+		else:
+			return None, None
+
+	def _introspect(self):
+		self._interfaces = []
+		self._children = []
+		try:
+			data = lxml.etree.XML(self.object.Introspect())
+		except:
+			return
+		for child in data.findall('node'):
+			child_path = "/" + child.get('name')
+			if self.path != "/":
+				child_path = self.path + child_path
+			self.path + "/" + child.get('name')
+			self._children.append(Object(self.bus, self.service, child_path))
+		for iface in data.findall('interface'):
+			self._interfaces.append(Interface(iface))
+
+def service_is_empty(service, check_for_signals = True):
+	# A service is empty if all its (registered) objects are empty
+	return Object(bus, service, '/').is_empty(check_for_signals)
+
+def service_is_named(service):
+	return not service.startswith(':')
+
+def list_objects(root_obj, hide_empty, check_for_signals):
+	# Return a list of objects contained in root_obj, including root_obj
+	# but excluding (including root_obj) empty objects if needed
+	if hide_empty and root_obj.is_empty(check_for_signals):
+		# The object and its children are empty, no need to continue
+		return []
+	if hide_empty and root_obj.is_empty(check_for_signals, False): 
+		# The object is empty but one of its children isn't, so continue
+		result = []
+	else:
+		result = [root_obj]
+	
+	for child in root_obj.children:
+		result.extend(list_objects(child, hide_empty, check_for_signals))
+	return result
+
+def eval_list(args):
+	# For each element in the list, eval() it if it begins with %
+	# For example %"foo" => "foo", %True => True, %1.20 => 1.2...
+	# An initial %% is translated into % and nothing is evaluated
+	ret = []
+	for arg in args:
+		if len(arg) >= 2 and arg[0] == '%':
+			if arg[1] == '%':
+				ret.append('%' + arg[2:])
+			else:
+				ret.append(eval(arg[1:], {}))
+		else:
+			ret.append(arg)
+	return ret
+
+def to_native_type(data):
+	# Transform dbus types into native types
+	if isinstance(data, dbus.Struct):
+		return tuple(to_native_type(x) for x in data)
+	elif isinstance(data, dbus.Array):
+		return [to_native_type(x) for x in data]
+	elif isinstance(data, dbus.Dictionary):
+		return dict((to_native_type(k), to_native_type(v)) for (k, v) in data.items())
+	elif isinstance(data, dbus.Double):
+		return float(data)
+	elif isinstance(data, dbus.Boolean):
+		return bool(data)
+	elif isinstance(data, (dbus.String, dbus.ObjectPath)):
+		return str(data)
+	elif isinstance(data, dbus.Signature):
+		return str(Signature(data))
+	else:
+		return int(data)
+
+opts = optparse.OptionParser()
+opts.add_option("-a", "--all", help="Equivalent to -u -e -s -t", action="store_true", default=False)
+opts.add_option("-c", "--completion", help="Set this if you are ZSH", action="store_true", default=False)
+opts.add_option("-e", "--hide-empty", help="Hide empty services/objects", action="store_true", default=False)
+opts.add_option("-s", "--signals", help="Also show signals", action="store_true", default=False)
+opts.add_option("-t", "--activatables", help="Also show activatables services", action="store_true", default=False)
+opts.add_option("-u", "--unnamed", help="Also show unnamed services (most likely clients)", action="store_true", default=False)
+opts.add_option("-y", "--system-bus", help="Work on system bus instead of session bus", action="store_true", default=False)
+options, args = opts.parse_args()
+if options.all:
+	options.signals = options.unnamed = options.activatables = True
+	options.hide_empty = False
+
+if options.system_bus:
+	bus = dbus.SystemBus()
+else:
+	bus = dbus.SessionBus()
+
+if len(args) == 0:
+	dbusd = Object(bus, 'org.freedesktop.DBus', '/')
+	services = dbusd.object.ListNames(dbus_interface = 'org.freedesktop.DBus')
+	if options.activatables:
+		services += dbusd.object.ListActivatableNames(dbus_interface = 'org.freedesktop.DBus')
+	if not options.unnamed: # Delete unnamed services if needed
+		services = filter(service_is_named, services)
+	if options.hide_empty: # Delete empty services if needed
+		services = filter(service_is_empty, services)
+	
+	for service in services:
+		print service
+elif len(args) == 1:
+	for obj in list_objects(Object(bus, args[0], '/'), options.hide_empty, options.signals):
+		print obj.path
+elif len(args) == 2:
+	obj = Object(bus, args[0], args[1])
+	
+	if options.completion:
+		for iface in obj.interfaces:
+			for x in iface.methods:
+				print x.name
+				print iface.name + "." + x.name
+			if options.signals:
+				for x in iface.signals:
+					print x.name
+					print iface.name + "." + x.name
+	else:
+		for iface in obj.interfaces:
+			if options.hide_empty and iface.is_empty():
+				continue
+			print "Interface %s:" % iface.name
+			
+			for method in iface.methods:
+				print " " + method.pprint()
+			if iface.methods or not options.signals or not iface.signals:
+				print
+			
+			if options.signals:
+				for signal in iface.signals:
+					print " " + signal.pprint()
+				if iface.signals:
+					print
+else:
+	service, path, method = args[0:3]
+	obj = Object(bus, service, path)
+	args = args[3:]
+	iface, method = obj.resolve_method(method)
+	
+	if options.completion:
+		if len(args) < len(method.args_in):
+			arg = method.args_in[len(args)]
+			print str(arg.signature),
+			if arg.name:
+				print arg.name,
+			print
+		else:
+			print "No more arguments"
+	else:
+		args = eval_list(args)
+		ret = obj.object.get_dbus_method(method.name, iface.name)(*args)
+		outargs = method.args_out
+
+		if not isinstance(ret, tuple) or isinstance(ret, dbus.Struct):
+			ret = (ret,)
+		
+		for i, arg in enumerate(ret):
+			if i < len(outargs):
+				if outargs[i].name:
+					print "%s = " % outargs[i].name, 
+			pprint.pprint(to_native_type(arg))
