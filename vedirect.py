@@ -28,9 +28,9 @@ class vedirect:
         
         if self.state == self.WAIT_HEADER:
             try:
-		self.bytes_sum += ord(byte)
+		self.bytes_sum += ord(byte) #ord throws: given char arr len 0
 	    except TypeError:
-		print("Malformed packet --wait")
+		print("Malformed packet --wait") #inverter hangs here
 		self.bytes_sum = 0
             if byte == self.header1:
                 self.state = self.WAIT_HEADER
@@ -108,11 +108,11 @@ class vedirect:
                 try:
                     packet = self.input(byte.decode())
                 except UnicodeError:
-                    packet = self.input(byte.decode('utf-8', errors="ignore")) #THROWS OUT ERRORS
+                    packet = self.input(byte.decode('utf-8', errors="ignore")) #THROWS OUT ERRORS, could be causing the ord issues.
                 else:
                     pass
                 if (packet != None):
-                    callbackFunction(packet) #packet is dict?
+                    callbackFunction(packet) #packet is complete at this point. type=dict
             else:
                 print("No byte, break occured.");
                 break
