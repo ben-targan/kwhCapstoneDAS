@@ -27,7 +27,11 @@ class vedirect:
             
         
         if self.state == self.WAIT_HEADER:
-            self.bytes_sum += ord(byte)
+            try:
+		self.bytes_sum += ord(byte)
+	    except TypeError:
+		print("Malformed packet --wait")
+		self.bytes_sum = 0
             if byte == self.header1:
                 self.state = self.WAIT_HEADER
             elif byte == self.header2:
@@ -35,7 +39,11 @@ class vedirect:
 
             return None
         elif self.state == self.IN_KEY:
-            self.bytes_sum += ord(byte)
+            try:
+		self.bytes_sum += ord(byte)
+	    except TypeError:
+		print("Malformed packet --inkey")
+		self.bytes_sum = 0
             if byte == self.delimiter:
                 if (self.key == 'Checksum'):
                     self.state = self.IN_CHECKSUM
@@ -45,7 +53,11 @@ class vedirect:
                 self.key += byte
             return None
         elif self.state == self.IN_VALUE:
-            self.bytes_sum += ord(byte)
+            try:
+	    	self.bytes_sum += ord(byte)
+	    except TypeError: 
+		print("Malformed packet --invalue")
+		self.bytes_sum = 0
             if byte == self.header1:
                 self.state = self.WAIT_HEADER
                 self.dict[self.key] = self.value;
@@ -55,7 +67,11 @@ class vedirect:
                 self.value += byte
             return None
         elif self.state == self.IN_CHECKSUM:
-            self.bytes_sum += ord(byte)
+            try:
+		self.bytes_sum += ord(byte)
+	    except TypeError:
+		print("Malformed packet --checksum")
+		self.bytes_sum = 0
             self.key = ''
             self.value = ''
             self.state = self.WAIT_HEADER
@@ -75,29 +91,34 @@ class vedirect:
     def read_data(self):
         while True:
             byte = self.ser.read(1)
-            packet = self.input(byte)
+            packet = self.input(byte).encode('utf-8').strip()
 
     def read_data_single(self):
         while True:
             byte = self.ser.read(1)
-            packet = self.input(byte)
+            packet = self.input(byte).encode('utf-8').strip()
             if (packet != None):
                 return packet
             
 
     def read_data_callback(self, callbackFunction):
         while True:
-            print("Trying to read...");
             byte = self.ser.read(1)
             if byte:
-                packet = self.input(byte.decode())
+                try:
+                    packet = self.input(byte.decode())
+                except UnicodeError:
+                    packet = self.input(byte.decode('utf-8', errors="ignore")) #THROWS OUT ERRORS
+                else:
+                    pass
                 if (packet != None):
-                    callbackFunction(packet)
+                    callbackFunction(packet) #packet is dict?
             else:
                 print("No byte, break occured.");
                 break
 
 
+##### EXTRACT OUTPUT DICT FROM THIS METHOD
 def print_data_callback(data):
     print(data)
 
