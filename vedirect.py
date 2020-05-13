@@ -16,7 +16,7 @@ class vedirect:
     
     def __init__(self, serialport):
         self.serialport = serialport
-        self.ser = serial.Serial(serialport, 19200)#, timeout=timeout)
+        self.ser = serial.Serial(serialport, 19200)
         self.carrigeReturn = '\r'
         self.newLine = '\n'
         self.colon = ':'
