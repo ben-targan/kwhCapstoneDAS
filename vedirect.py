@@ -153,10 +153,10 @@ class vedirect:
             byte = self.ser.read(1)
             if byte:
                 try:
-                    packet = self.input(byte.decode())
+                    packet = self.input(byte.decode('windows-1252'))
                 except UnicodeError:
                     if debug:
-                        print("NON UTF CHAR")
+                        print("NON win1252 CHAR")
                     # packet = self.input(byte.decode('windows-1252')) #Guess another encoding, doesnt error, but inverter returns Euro sign & '/x00'
                 else:
                     pass
