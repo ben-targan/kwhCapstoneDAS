@@ -9,7 +9,7 @@ import os, serial, argparse
 import subprocess
 
 
-debug = True
+debug = False
 
 
 class vedirect:
