@@ -1,7 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Charge Controller Processing
+
 import os, serial, argparse
+
+
+import subprocess
+
+
+debug = True
+
 
 class vedirect:
     
@@ -30,12 +39,15 @@ class vedirect:
 #---------------------------------------------------------------------
         
         if self.currState == self.WAIT_HEADER:
-            print("### In Wait, ord: ", ord(byte))
+
+            if debug:
+                print("### In Wait, ord: ", ord(byte))
             try:
                 self.packetLen += ord(byte) #ord throws: given char arr len 0
 
             except TypeError:
-                print("Malformed packet --wait") #inverter hangs here
+                if debug:
+                    print("Malformed packet --wait") #inverter hangs here
 
             if byte == self.carrigeReturn:
                 self.currState = self.WAIT_HEADER
@@ -48,12 +60,14 @@ class vedirect:
 #---------------------------------------------------------------------
 
         elif self.currState == self.IN_KEY:
-            print("### In Key")
+            if debug:
+                print("### In Key")
             try:
                 self.packetLen += ord(byte)
 
             except TypeError:
-                print("Malformed packet --inkey")
+                if debug:
+                    print("Malformed packet --inkey")
             
             if byte == self.tab:
                 if (self.key == 'Checksum'):
@@ -70,12 +84,14 @@ class vedirect:
 #---------------------------------------------------------------------        
 
         elif self.currState == self.IN_VALUE:
-            print("### In Value")
+            if debug:
+                print("### In Value")
             try:
                 self.packetLen += ord(byte)
 
             except TypeError: 
-                print("Malformed packet --invalue")
+                if debug:
+                    print("Malformed packet --invalue")
             
             if byte == self.carrigeReturn:
                 self.currState = self.WAIT_HEADER
@@ -92,11 +108,13 @@ class vedirect:
 #---------------------------------------------------------------------
 
         elif self.currState == self.IN_CHECKSUM:
-            print("### In Checksum")
+            if debug:
+                print("### In Checksum")
             try:
                 self.packetLen += ord(byte)
             except TypeError:
-                print("Malformed packet --checksum")
+                if debug:
+                    print("Malformed packet --checksum")
             
             self.key = ''
             self.value = ''
@@ -107,13 +125,15 @@ class vedirect:
                 return self.packetDict #VALID PACKET RETURN
 
             else:
-                print("Malformed packet")
+                if debug:
+                    print("Malformed packet")
                 self.packetLen = 0
 
 #---------------------------------------------------------------------                
 
         elif self.currState == self.HEX:
-            print("### In Hex")
+            if debug:
+                print("### In Hex")
             self.packetLen = 0
 
             if byte == self.newLine:
@@ -122,21 +142,9 @@ class vedirect:
 #---------------------------------------------------------------------
 
         else:
-            print("### In assertionError")
+            if debug:
+                print("### In assertionError")
             raise AssertionError()
-
-    # unused methods:
-    # def read_data(self):
-    #     while True:
-    #         byte = self.ser.read(1)
-    #         packet = self.input(byte).encode('utf-8').strip()
-
-    # def read_data_single(self):
-    #     while True:
-    #         byte = self.ser.read(1)
-    #         packet = self.input(byte).encode('utf-8').strip()
-    #         if (packet != None):
-    #             return packet
             
 
     def read_data_callback(self, callbackFunction):
@@ -146,7 +154,8 @@ class vedirect:
                 try:
                     packet = self.input(byte.decode())
                 except UnicodeError:
-                    #print("NON UTF CHAR")
+                    if debug:
+                        print("NON UTF CHAR")
                     packet = self.input(byte.decode('windows-1252')) #Guess another encoding, doesnt error, but inverter returns Euro sign & '/x00'
                 else:
                     pass
@@ -159,13 +168,21 @@ class vedirect:
 
 ##### EXTRACT OUTPUT DICT FROM THIS METHOD
 def print_data_callback(data):
+
+    # TODO: remove unicode, string process dict
+
+
     print(data)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Process VE.Direct protocol')
-    parser.add_argument('--port', help='Serial port')
-    parser.add_argument('--timeout', help='Serial port read timeout', type=int, default='60')
-    args = parser.parse_args()
-    ve = vedirect(args.port, args.timeout)
+    # TODO: add dynamic input from command
+    # test = subprocess.Popen(["dmesg", "|", "grep", ""], stdout=subprocess.PIPE)
+    # output = test.communicate()[0]
+
+
+    port = "/dev/ttyUSB0"
+
+
+    ve = vedirect(port)
     ve.read_data_callback(print_data_callback)
     #print(ve.read_data_single())
