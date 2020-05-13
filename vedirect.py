@@ -14,7 +14,7 @@ debug = False
 
 class vedirect:
     
-    def __init__(self):
+    def __init__(self, port):
         self.serialport = serialport
         self.ser = serial.Serial(serialport, 19200, timeout=timeout)
         self.carrigeReturn = '\r'
