@@ -8,97 +8,130 @@ class vedirect:
     def __init__(self, serialport, timeout):
         self.serialport = serialport
         self.ser = serial.Serial(serialport, 19200, timeout=timeout)
-        self.header1 = '\r'
-        self.header2 = '\n'
-        self.hexmarker = ':'
-        self.delimiter = '\t'
+        self.carrigeReturn = '\r'
+        self.newLine = '\n'
+        self.colon = ':'
+        self.tab = '\t'
         self.key = ''
         self.value = ''
-        self.bytes_sum = 0;
-        self.state = self.WAIT_HEADER
-        self.dict = {}
+        self.packetLen = 0
+        self.currState = self.WAIT_HEADER
+        self.packetDict = {}
 
 
+    # constants
     (HEX, WAIT_HEADER, IN_KEY, IN_VALUE, IN_CHECKSUM) = range(5)
 
+    # input loop, one byte at a time
     def input(self, byte):
-        if byte == self.hexmarker and self.state != self.IN_CHECKSUM:
-            self.state = self.HEX
+        if byte == self.colon and self.currState != self.IN_CHECKSUM:
+            self.currState = self.HEX
             
+#---------------------------------------------------------------------
         
-        if self.state == self.WAIT_HEADER:
+        if self.currState == self.WAIT_HEADER:
             try:
-		self.bytes_sum += ord(byte) #ord throws: given char arr len 0
-	    except TypeError:
-		print("Malformed packet --wait") #inverter hangs here
-		self.bytes_sum = 0
-            if byte == self.header1:
-                self.state = self.WAIT_HEADER
-            elif byte == self.header2:
-                self.state = self.IN_KEY
+				self.packetLen += ord(byte) #ord throws: given char arr len 0
+    		
+    		except TypeError:
+				print("Malformed packet --wait") #inverter hangs here
+            
+            if byte == self.carrigeReturn:
+                self.currState = self.WAIT_HEADER
+            
+            elif byte == self.newLine:
+                self.currState = self.IN_KEY
 
             return None
-        elif self.state == self.IN_KEY:
+
+#---------------------------------------------------------------------
+
+        elif self.currState == self.IN_KEY:
             try:
-		self.bytes_sum += ord(byte)
-	    except TypeError:
-		print("Malformed packet --inkey")
-		self.bytes_sum = 0
-            if byte == self.delimiter:
+				self.packetLen += ord(byte)
+	    		
+    		except TypeError:
+				print("Malformed packet --inkey")
+            
+            if byte == self.tab:
                 if (self.key == 'Checksum'):
-                    self.state = self.IN_CHECKSUM
+                    self.currState = self.IN_CHECKSUM
+                
                 else:
-                    self.state = self.IN_VALUE
+                    self.currState = self.IN_VALUE
+            
             else:
                 self.key += byte
+            
             return None
-        elif self.state == self.IN_VALUE:
+        
+#---------------------------------------------------------------------        
+
+        elif self.currState == self.IN_VALUE:
             try:
-	    	self.bytes_sum += ord(byte)
-	    except TypeError: 
-		print("Malformed packet --invalue")
-		self.bytes_sum = 0
-            if byte == self.header1:
-                self.state = self.WAIT_HEADER
-                self.dict[self.key] = self.value;
-                self.key = '';
-                self.value = '';
+	    		self.packetLen += ord(byte)
+
+	    	except TypeError: 
+				print("Malformed packet --invalue")
+            
+            if byte == self.carrigeReturn:
+                self.currState = self.WAIT_HEADER
+                
+                self.packetDict[self.key] = self.value
+                self.key = ''
+                self.value = ''
+            
             else:
                 self.value += byte
+            
             return None
-        elif self.state == self.IN_CHECKSUM:
+
+#---------------------------------------------------------------------
+
+        elif self.currState == self.IN_CHECKSUM:
             try:
-		self.bytes_sum += ord(byte)
-	    except TypeError:
-		print("Malformed packet --checksum")
-		self.bytes_sum = 0
+				self.packetLen += ord(byte)
+	    
+	    	except TypeError:
+				print("Malformed packet --checksum")
+            
             self.key = ''
             self.value = ''
-            self.state = self.WAIT_HEADER
-            if (self.bytes_sum % 256 == 0):
-                self.bytes_sum = 0
-                return self.dict
+            self.currState = self.WAIT_HEADER
+            
+            if (self.packetLen % 256 == 0):
+                self.packetLen = 0
+                return self.packetDict #VALID PACKET RETURN
+            
             else:
-                print("Malformed packet");
-                self.bytes_sum = 0
-        elif self.state == self.HEX:
-            self.bytes_sum = 0
-            if byte == self.header2:
-                self.state = self.WAIT_HEADER
+                print("Malformed packet")
+                self.packetLen = 0
+
+#---------------------------------------------------------------------                
+
+        elif self.currState == self.HEX:
+        	self.packetLen = 0
+
+            if byte == self.newLine:
+                self.currState = self.WAIT_HEADER
+
+#---------------------------------------------------------------------
+
         else:
             raise AssertionError()
 
-    def read_data(self):
-        while True:
-            byte = self.ser.read(1)
-            packet = self.input(byte).encode('utf-8').strip()
+    # unused methods:
+    # def read_data(self):
+    #     while True:
+    #         byte = self.ser.read(1)
+    #         packet = self.input(byte).encode('utf-8').strip()
 
-    def read_data_single(self):
-        while True:
-            byte = self.ser.read(1)
-            packet = self.input(byte).encode('utf-8').strip()
-            if (packet != None):
-                return packet
+    # def read_data_single(self):
+    #     while True:
+    #         byte = self.ser.read(1)
+    #         packet = self.input(byte).encode('utf-8').strip()
+    #         if (packet != None):
+    #             return packet
             
 
     def read_data_callback(self, callbackFunction):
@@ -114,7 +147,7 @@ class vedirect:
                 if (packet != None):
                     callbackFunction(packet) #packet is complete at this point. type=dict
             else:
-                print("No byte, break occured.");
+                print("No byte, break occured.")
                 break
 
 
