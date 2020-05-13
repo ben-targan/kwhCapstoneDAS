@@ -9,13 +9,13 @@ import os, serial, argparse
 import subprocess
 
 
-
+# debug flag for additional printing
+debug = False
 
 
 class vedirect:
     
-    def __init__(self, serialport, debug = False):
-        self.debug = debug
+    def __init__(self, serialport):
         self.serialport = serialport
         self.ser = serial.Serial(serialport, 19200)
         self.carrigeReturn = '\r'
@@ -41,13 +41,13 @@ class vedirect:
         
         if self.currState == self.WAIT_HEADER:
 
-            if self.debug:
+            if debug:
                 print("### In Wait, ord: ", ord(byte))
             try:
                 self.packetLen += ord(byte) #ord throws: given char arr len 0
 
             except TypeError:
-                if self.debug:
+                if debug:
                     print("Malformed packet --wait") #inverter hangs here
 
             if byte == self.carrigeReturn:
@@ -61,13 +61,13 @@ class vedirect:
 #---------------------------------------------------------------------
 
         elif self.currState == self.IN_KEY:
-            if self.debug:
+            if debug:
                 print("### In Key")
             try:
                 self.packetLen += ord(byte)
 
             except TypeError:
-                if self.debug:
+                if debug:
                     print("Malformed packet --inkey")
             
             if byte == self.tab:
@@ -85,13 +85,13 @@ class vedirect:
 #---------------------------------------------------------------------        
 
         elif self.currState == self.IN_VALUE:
-            if self.debug:
+            if debug:
                 print("### In Value")
             try:
                 self.packetLen += ord(byte)
 
             except TypeError: 
-                if self.debug:
+                if debug:
                     print("Malformed packet --invalue")
             
             if byte == self.carrigeReturn:
@@ -109,12 +109,12 @@ class vedirect:
 #---------------------------------------------------------------------
 
         elif self.currState == self.IN_CHECKSUM:
-            if self.debug:
+            if debug:
                 print("### In Checksum")
             try:
                 self.packetLen += ord(byte)
             except TypeError:
-                if self.debug:
+                if debug:
                     print("Malformed packet --checksum")
             
             self.key = ''
@@ -126,14 +126,14 @@ class vedirect:
                 return self.packetDict #VALID PACKET RETURN
 
             else:
-                if self.debug:
+                if debug:
                     print("Malformed packet")
                 self.packetLen = 0
 
 #---------------------------------------------------------------------                
 
         elif self.currState == self.HEX:
-            if self.debug:
+            if debug:
                 print("### In Hex")
             self.packetLen = 0
 
@@ -143,7 +143,7 @@ class vedirect:
 #---------------------------------------------------------------------
 
         else:
-            if self.debug:
+            if debug:
                 print("### In assertionError")
             raise AssertionError()
             
@@ -155,7 +155,7 @@ class vedirect:
                 try:
                     packet = self.input(byte.decode())
                 except UnicodeError:
-                    if self.debug:
+                    if debug:
                         print("NON UTF CHAR")
                     packet = self.input(byte.decode('windows-1252')) #Guess another encoding, doesnt error, but inverter returns Euro sign & '/x00'
                 else:
@@ -180,14 +180,9 @@ if __name__ == '__main__':
     # test = subprocess.Popen(["dmesg", "|", "grep", ""], stdout=subprocess.PIPE)
     # output = test.communicate()[0]
 
-
-    parser = argparse.ArgumentParser(description='Process VE.Direct protocol')
-    parser.add_argument('--debug', help='debug flag, True/False', type=bool, default='False')
-    args = parser.parse_args()
-
     port = "/dev/ttyUSB0"
 
 
-    ve = vedirect(port, args.debug)
+    ve = vedirect(port)
     ve.read_data_callback(print_data_callback)
     #print(ve.read_data_single())
