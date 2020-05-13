@@ -180,9 +180,13 @@ if __name__ == '__main__':
     # output = test.communicate()[0]
 
 
+    parser = argparse.ArgumentParser(description='Process VE.Direct protocol')
+    parser.add_argument('--debug', help='debug flag, True/False', type=bool, default='False')
+    args = parser.parse_args()
+
     port = "/dev/ttyUSB0"
 
 
-    ve = vedirect(port)
+    ve = vedirect(port, args.debug)
     ve.read_data_callback(print_data_callback)
     #print(ve.read_data_single())
