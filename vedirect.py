@@ -173,7 +173,12 @@ def print_data_callback(data):
     # TODO: remove unicode, string process dict
 
 
-    print(data)
+    for key in data:
+        print(key.encode("utf-8"), " : ", data[key].encode("utf-8"))
+
+
+    # print(data)
+    print("-----------------------------------------------------")
 
 if __name__ == '__main__':
     # TODO: add dynamic input from command
