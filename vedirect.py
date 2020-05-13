@@ -14,7 +14,7 @@ import subprocess
 
 class vedirect:
     
-    def __init__(self, serialport, debug):
+    def __init__(self, serialport, debug = False):
         self.debug = debug
         self.serialport = serialport
         self.ser = serial.Serial(serialport, 19200)
