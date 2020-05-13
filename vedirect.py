@@ -127,7 +127,7 @@ class vedirect:
 
             else:
                 if debug:
-                    print("Malformed packet")
+                    print("Malformed packet --incorrect packetLen")
                 self.packetLen = 0
 
 #---------------------------------------------------------------------                
@@ -157,6 +157,7 @@ class vedirect:
                 except UnicodeError:
                     if debug:
                         print("NON win1252 CHAR")
+                        packet = self.input(byte.decode('utf-8'))
                     # packet = self.input(byte.decode('windows-1252')) #Guess another encoding, doesnt error, but inverter returns Euro sign & '/x00'
                 else:
                     pass
