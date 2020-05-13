@@ -31,11 +31,11 @@ class vedirect:
         
         if self.currState == self.WAIT_HEADER:
             try:
-				self.packetLen += ord(byte) #ord throws: given char arr len 0
-    		
-    		except TypeError:
-				print("Malformed packet --wait") #inverter hangs here
-            
+                self.packetLen += ord(byte) #ord throws: given char arr len 0
+
+            except TypeError:
+                print("Malformed packet --wait") #inverter hangs here
+
             if byte == self.carrigeReturn:
                 self.currState = self.WAIT_HEADER
             
@@ -48,10 +48,10 @@ class vedirect:
 
         elif self.currState == self.IN_KEY:
             try:
-				self.packetLen += ord(byte)
-	    		
-    		except TypeError:
-				print("Malformed packet --inkey")
+                self.packetLen += ord(byte)
+
+            except TypeError:
+                print("Malformed packet --inkey")
             
             if byte == self.tab:
                 if (self.key == 'Checksum'):
@@ -69,10 +69,10 @@ class vedirect:
 
         elif self.currState == self.IN_VALUE:
             try:
-	    		self.packetLen += ord(byte)
+                self.packetLen += ord(byte)
 
-	    	except TypeError: 
-				print("Malformed packet --invalue")
+            except TypeError: 
+                print("Malformed packet --invalue")
             
             if byte == self.carrigeReturn:
                 self.currState = self.WAIT_HEADER
@@ -90,10 +90,9 @@ class vedirect:
 
         elif self.currState == self.IN_CHECKSUM:
             try:
-				self.packetLen += ord(byte)
-	    
-	    	except TypeError:
-				print("Malformed packet --checksum")
+                self.packetLen += ord(byte)
+            except TypeError:
+                print("Malformed packet --checksum")
             
             self.key = ''
             self.value = ''
@@ -102,7 +101,7 @@ class vedirect:
             if (self.packetLen % 256 == 0):
                 self.packetLen = 0
                 return self.packetDict #VALID PACKET RETURN
-            
+
             else:
                 print("Malformed packet")
                 self.packetLen = 0
@@ -110,7 +109,7 @@ class vedirect:
 #---------------------------------------------------------------------                
 
         elif self.currState == self.HEX:
-        	self.packetLen = 0
+            self.packetLen = 0
 
             if byte == self.newLine:
                 self.currState = self.WAIT_HEADER
