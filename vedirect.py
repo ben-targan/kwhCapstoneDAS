@@ -10,7 +10,7 @@ import subprocess
 
 
 # debug flag for additional printing
-debug = False
+debug = True
 
 
 class vedirect:
@@ -157,7 +157,7 @@ class vedirect:
                 except UnicodeError:
                     if debug:
                         print("NON UTF CHAR")
-                    packet = self.input(byte.decode('windows-1252')) #Guess another encoding, doesnt error, but inverter returns Euro sign & '/x00'
+                    # packet = self.input(byte.decode('windows-1252')) #Guess another encoding, doesnt error, but inverter returns Euro sign & '/x00'
                 else:
                     pass
                 if (packet != None):
