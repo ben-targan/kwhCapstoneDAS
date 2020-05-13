@@ -30,6 +30,7 @@ class vedirect:
 #---------------------------------------------------------------------
         
         if self.currState == self.WAIT_HEADER:
+            print("### In Wait, ord: ", ord(byte))
             try:
                 self.packetLen += ord(byte) #ord throws: given char arr len 0
 
@@ -47,6 +48,7 @@ class vedirect:
 #---------------------------------------------------------------------
 
         elif self.currState == self.IN_KEY:
+            print("### In Key")
             try:
                 self.packetLen += ord(byte)
 
@@ -68,6 +70,7 @@ class vedirect:
 #---------------------------------------------------------------------        
 
         elif self.currState == self.IN_VALUE:
+            print("### In Value")
             try:
                 self.packetLen += ord(byte)
 
@@ -89,6 +92,7 @@ class vedirect:
 #---------------------------------------------------------------------
 
         elif self.currState == self.IN_CHECKSUM:
+            print("### In Checksum")
             try:
                 self.packetLen += ord(byte)
             except TypeError:
@@ -109,6 +113,7 @@ class vedirect:
 #---------------------------------------------------------------------                
 
         elif self.currState == self.HEX:
+            print("### In Hex")
             self.packetLen = 0
 
             if byte == self.newLine:
@@ -117,6 +122,7 @@ class vedirect:
 #---------------------------------------------------------------------
 
         else:
+            print("### In assertionError")
             raise AssertionError()
 
     # unused methods:
@@ -140,7 +146,8 @@ class vedirect:
                 try:
                     packet = self.input(byte.decode())
                 except UnicodeError:
-                    packet = self.input(byte.decode('utf-8', errors="ignore")) #THROWS OUT ERRORS, could be causing the ord issues.
+                    #print("NON UTF CHAR")
+                    packet = self.input(byte.decode('windows-1252')) #Guess another encoding, doesnt error, but inverter returns Euro sign & '/x00'
                 else:
                     pass
                 if (packet != None):
