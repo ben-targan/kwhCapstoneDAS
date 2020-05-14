@@ -10,7 +10,7 @@ import subprocess
 
 
 # debug flag for additional printing
-debug = True
+debug = False
 
 
 class vedirect:
