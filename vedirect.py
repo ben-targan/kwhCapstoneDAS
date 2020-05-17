@@ -171,10 +171,46 @@ class vedirect:
                 break
 
 
+
+def convertKeys(data):
+    keysDict = {
+        "PPV" : "PV Array Power",
+        "VPV" : "PV Array Voltage",
+        "LOAD" : "Load",
+        "H19" : "h19",
+        "Relay" : "Relay",
+        "ERR" : "Error #",
+        "FW" : "FW",
+        "I" : "Main Current",
+        "H21" : "h21",
+        "PID" : "Process ID",
+        "H20" : "h20",
+        "H23" : "h23",
+        "MPPT" : "Maximum Power Point",
+        "HSDS" : "HSDS",
+        "SER#" : "Serial #",
+        "V" : "Main Voltage",
+        "CS" : "CS",
+        "H22" : "h22"
+    }
+    newdata = {}
+
+    for key in data:
+
+        try:
+            newdata[keysDict[key]] = data[key]
+        except KeyError:
+            newdata[key] = data[key]
+
+    return newdata
+
+
 ##### EXTRACT OUTPUT DICT FROM THIS METHOD
 def print_data_callback(data):
 
     # TODO: remove unicode, string process dict
+
+    data = convertKeys(data)
 
     print("-----------------------------------------------------")
     for key in data:
