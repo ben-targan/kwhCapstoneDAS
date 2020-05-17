@@ -9,7 +9,7 @@ import os, serial, argparse
 import subprocess
 import time
 
-import KWH_MySQL
+# import KWH_MySQL
 
 
 # debug flag for additional printing
@@ -212,9 +212,12 @@ def print_data_callback(data):
 
     data = convertKeys(data)
 
+    file = open("/home/pi/testOutput", "a")
+
     print("-----------------------------------------------------")
     for key in data:
         print("%s : %s" % (key.encode("utf-8"), data[key].encode("utf-8")))
+        file.write("%s : %s" % (key.encode("utf-8"), data[key].encode("utf-8")))
 
 
     # DB = KWH_MySQL.KWH_MySQL()
@@ -227,6 +230,10 @@ def print_data_callback(data):
 
 
     print("-----------------------------------------------------")
+
+    file.close()
+
+
 
 if __name__ == '__main__':
     # TODO: add dynamic input from command
