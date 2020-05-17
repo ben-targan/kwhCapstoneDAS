@@ -7,6 +7,9 @@ import os, serial, argparse
 
 
 import subprocess
+import time
+
+import KWH_MySQL
 
 
 # debug flag for additional printing
@@ -178,13 +181,22 @@ def print_data_callback(data):
         print("%s : %s" % (key.encode("utf-8"), data[key].encode("utf-8")))
 
 
-    # print(data)
+    # DB = KWH_MySQL.KWH_MySQL()
+
+    # for key in data:
+    #     timestamp = time.time()
+    #     sql="INSERT INTO data VALUES (" + timestamp +","+ key.encode("utf-8") 
+    #         + "," + data[key].encode("utf-8") + ");"
+    #     DB.INSERT(sql)
+
+
     print("-----------------------------------------------------")
 
 if __name__ == '__main__':
     # TODO: add dynamic input from command
     # test = subprocess.Popen(["dmesg", "|", "grep", ""], stdout=subprocess.PIPE)
     # output = test.communicate()[0]
+
 
     port = "/dev/ttyUSB0"
 
