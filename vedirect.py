@@ -240,7 +240,7 @@ if __name__ == '__main__':
     possiblePorts = listPorts.comports()
 
     for port in possiblePorts:
-        if port.description == 'VE Direct Cable':
+        if port.description == 'VE Direct cable':
             correctPort = port.device
 
 
