@@ -5,7 +5,7 @@
 
 import os, serial, argparse
 
-
+import serial.tools.list_ports as listPorts
 import subprocess
 import time
 
@@ -237,7 +237,7 @@ if __name__ == '__main__':
     correctPort = ''
 
 
-    possiblePorts = serial.tools.list_ports.comports()
+    possiblePorts = listPorts.comports()
 
     for port in possiblePorts:
         if port.description == 'VE Direct Cable':
