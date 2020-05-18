@@ -208,8 +208,6 @@ def convertKeys(data):
 ##### EXTRACT OUTPUT DICT FROM THIS METHOD
 def print_data_callback(data):
 
-    # TODO: remove unicode, string process dict
-
     data = convertKeys(data)
 
     file = open("/home/pi/testOutput", "a")
@@ -236,14 +234,19 @@ def print_data_callback(data):
 
 
 if __name__ == '__main__':
-    # TODO: add dynamic input from command
-    # test = subprocess.Popen(["dmesg", "|", "grep", ""], stdout=subprocess.PIPE)
-    # output = test.communicate()[0]
+    correctPort = ''
 
 
-    port = "/dev/ttyUSB0"
+    possiblePorts = serial.tools.list_ports.comports()
+
+    for port in possiblePorts:
+        if port.description = 'VE Direct Cable':
+            correctPort = port
 
 
-    ve = vedirect(port)
+    
+
+
+    ve = vedirect(correctPort)
     ve.read_data_callback(print_data_callback)
     #print(ve.read_data_single())
