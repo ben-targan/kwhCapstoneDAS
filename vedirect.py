@@ -241,7 +241,7 @@ if __name__ == '__main__':
 
     for port in possiblePorts:
         if port.description == 'VE Direct Cable':
-            correctPort = port
+            correctPort = port.device
 
 
     
