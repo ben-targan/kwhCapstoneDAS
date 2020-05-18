@@ -240,7 +240,7 @@ if __name__ == '__main__':
     possiblePorts = serial.tools.list_ports.comports()
 
     for port in possiblePorts:
-        if port.description = 'VE Direct Cable':
+        if port.description == 'VE Direct Cable':
             correctPort = port
 
 
