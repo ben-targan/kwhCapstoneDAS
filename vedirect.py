@@ -244,7 +244,8 @@ if __name__ == '__main__':
             correctPort = port.device
 
 
-    
+    #TODO: add logging
+    #TODO: if port not found, log error and exit
 
 
     ve = vedirect(correctPort)
