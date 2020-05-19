@@ -4,12 +4,18 @@
 # Charge Controller Processing
 
 import os, serial, argparse
-
 import serial.tools.list_ports as listPorts
 import subprocess
 import time
+import KWH_MySQL
 
-# import KWH_MySQL
+# KWH debug, spans system
+DEBUG = int(config_var['DEBUG'])
+
+# Log function
+def log(logText):
+    with open("/kwh/log/modbus.log", "a+") as log:
+        log.write(str(int(time.time())) + ": " + logText +"\n")
 
 
 # debug flag for additional printing
@@ -18,7 +24,8 @@ debug = False
 
 class vedirect:
     
-    def __init__(self, serialport):
+    def __init__(self, serialport, timestamp):
+        self.timestamp = timestamp
         self.serialport = serialport
         self.ser = serial.Serial(serialport, 19200)
         self.carrigeReturn = '\r'
@@ -40,7 +47,7 @@ class vedirect:
         if byte == self.colon and self.currState != self.IN_CHECKSUM:
             self.currState = self.HEX
             
-#---------------------------------------------------------------------
+        #---------------------------------------------------------------------
         
         if self.currState == self.WAIT_HEADER:
 
@@ -61,7 +68,7 @@ class vedirect:
 
             return None
 
-#---------------------------------------------------------------------
+        #---------------------------------------------------------------------
 
         elif self.currState == self.IN_KEY:
             if debug:
@@ -85,7 +92,7 @@ class vedirect:
             
             return None
         
-#---------------------------------------------------------------------        
+        #---------------------------------------------------------------------        
 
         elif self.currState == self.IN_VALUE:
             if debug:
@@ -109,7 +116,7 @@ class vedirect:
             
             return None
 
-#---------------------------------------------------------------------
+        #---------------------------------------------------------------------
 
         elif self.currState == self.IN_CHECKSUM:
             if debug:
@@ -133,7 +140,7 @@ class vedirect:
                     print("Malformed packet --incorrect packetLen")
                 self.packetLen = 0
 
-#---------------------------------------------------------------------                
+        #---------------------------------------------------------------------                
 
         elif self.currState == self.HEX:
             if debug:
@@ -143,7 +150,7 @@ class vedirect:
             if byte == self.newLine:
                 self.currState = self.WAIT_HEADER
 
-#---------------------------------------------------------------------
+        #---------------------------------------------------------------------
 
         else:
             if debug:
@@ -151,7 +158,8 @@ class vedirect:
             raise AssertionError()
             
 
-    def read_data_callback(self, callbackFunction):
+#-----------------------------------------------------------------------------
+    def read(self, sendingFunction):
         while True:
             byte = self.ser.read(1)
             if byte:
@@ -165,13 +173,13 @@ class vedirect:
                 else:
                     pass
                 if (packet != None):
-                    callbackFunction(packet) #packet is complete at this point. type=dict
+                    sendingFunction(packet, self.timestamp) #packet is complete at this point. type=dict
             else:
                 print("No byte, break occured.")
                 break
 
 
-
+#-----------------------------------------------------------------------------
 def convertKeys(data):
     keysDict = {
         "PPV" : "PV Array Power",
@@ -204,32 +212,30 @@ def convertKeys(data):
 
     return newdata
 
+#-----------------------------------------------------------------------------
 
-##### EXTRACT OUTPUT DICT FROM THIS METHOD
-def print_data_callback(data):
+def sendToSQL(data, timestamp):
 
     data = convertKeys(data)
 
-    file = open("/home/pi/testOutput", "a")
+    insert in format timestamp, label, value
+    DB = KWH_MySQL.KWH_MySQL()
+
+    for key in data:
+        sql="INSERT INTO data VALUES (" + timestamp +","+ key.encode("utf-8") 
+            + "," + data[key].encode("utf-8") + ");"
+        DB.INSERT(sql)
+        if DEBUG: log(sql)
+
+
+def printToConsole(data, timestamp):
+
+    data = convertKeys(data)
 
     print("-----------------------------------------------------")
     for key in data:
         print("%s : %s" % (key.encode("utf-8"), data[key].encode("utf-8")))
-        file.write("%s : %s" % (key.encode("utf-8"), data[key].encode("utf-8")))
-
-
-    # DB = KWH_MySQL.KWH_MySQL()
-
-    # for key in data:
-    #     timestamp = time.time()
-    #     sql="INSERT INTO data VALUES (" + timestamp +","+ key.encode("utf-8") 
-    #         + "," + data[key].encode("utf-8") + ");"
-    #     DB.INSERT(sql)
-
-
     print("-----------------------------------------------------")
-
-    file.close()
 
 
 
@@ -245,9 +251,11 @@ if __name__ == '__main__':
 
 
     #TODO: add logging
-    #TODO: if port not found, log error and exit
+    if correctPort == '':
+        log("Serial Port for Charge Controller not found, exiting...")
+        raise SystemExit(0)
 
 
     ve = vedirect(correctPort)
-    ve.read_data_callback(print_data_callback)
-    #print(ve.read_data_single())
+    ve.read(sendToSQL)
+    ve.read(printToConsole)
