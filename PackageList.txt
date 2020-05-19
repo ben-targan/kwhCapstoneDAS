@@ -1,0 +1,3 @@
+pyserial: python -m pip install pyserial
+	https://github.com/pyserial/
+

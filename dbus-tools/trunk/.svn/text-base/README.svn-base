@@ -1,0 +1,9 @@
+This is dbus-tools, a set of tools to have more fun with DBus :)
+Home page (last version, documentation): http://code.google.com/p/dbus-tools
+
+Installation:
+ - copy dbus somewhere in your $PATH
+ - copy _dbus in /usr/share/zsh/site-functions if you want ZSH completion for
+dbus-cli. You can also add it somewhere into your $fpath, for example put it in
+$HOME/.config/zsh/comp/_dbus and add fpath=(${HOME}/.config/zsh/rc/comp $fpath)
+at the top of your .zshrc
