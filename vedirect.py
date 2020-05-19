@@ -257,5 +257,5 @@ if __name__ == '__main__':
 
 
     ve = vedirect(correctPort, timestamp)
-    ve.read(sendToSQL)
+    # ve.read(sendToSQL)
     ve.read(printToConsole)
