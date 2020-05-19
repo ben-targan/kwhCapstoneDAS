@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Charge Controller Processing
-
+import sys
 import os, serial, argparse
 import serial.tools.list_ports as listPorts
 import subprocess
@@ -218,7 +218,7 @@ def sendToSQL(data, timestamp):
 
     data = convertKeys(data)
 
-    insert in format timestamp, label, value
+    # insert in format timestamp, label, value
     DB = KWH_MySQL.KWH_MySQL()
 
     for key in data:
@@ -241,7 +241,7 @@ def printToConsole(data, timestamp):
 
 if __name__ == '__main__':
     correctPort = ''
-
+    timestamp = sys.argv[1]
 
     possiblePorts = listPorts.comports()
 
@@ -253,9 +253,9 @@ if __name__ == '__main__':
     #TODO: add logging
     if correctPort == '':
         log("Serial Port for Charge Controller not found, exiting...")
-        raise SystemExit(0)
+        sys.exit(0)
 
 
-    ve = vedirect(correctPort)
+    ve = vedirect(correctPort, timestamp)
     ve.read(sendToSQL)
     ve.read(printToConsole)
