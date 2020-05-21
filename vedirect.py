@@ -222,7 +222,7 @@ def sendToSQL(data, timestamp):
     DB = KWH_MySQL.KWH_MySQL()
 
     for key in data:
-        sql="INSERT INTO data VALUES (" + timestamp +","+ key.encode("utf-8") + "," + data[key].encode("utf-8") + ");"
+        sql="INSERT INTO data VALUES (" + timestamp +",\""+ str(key) + "\",\"" + str(data[key]) + "\");"
         DB.INSERT(sql)
         if DEBUG: log(sql)
 
