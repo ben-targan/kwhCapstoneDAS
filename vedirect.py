@@ -218,24 +218,21 @@ def convertKeys(data):
 def INSERT(sql):
     import MySQLdb
     from MySQLdb import Error
-    print("in insert---")
-    db = MySQLdb.connect('localhost','pi','','test')
-    cursor = db.cursor()
-    result = cursor.execute(sql)
+
     try:
+        db = MySQLdb.connect('localhost','pi','','test')
+        cursor = db.cursor()
+        result = cursor.execute(sql)
         db.commit()
         cursor.close()
         db.close()
-        print("SENT")
         
     except MySQLdb.Error as error:
         db.rollback()
         cursor.close()
         db.close()
-        print("ROLLEDBACK")
         return [1, error]
 
-    print("bottom of insert")
     return [0]
 
 
