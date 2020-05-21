@@ -226,11 +226,13 @@ def INSERT(sql):
         db.commit()
         cursor.close()
         db.close()
+        print("TRY INSERT")
         
     except MySQLdb.Error as error:
         db.rollback()
         cursor.close()
         db.close()
+        print("ROLLBACK")
         return [1, error]
 
     return [0]
