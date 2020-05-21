@@ -232,8 +232,8 @@ def INSERT(sql):
         db.rollback()
         cursor.close()
         db.close()
-        return [1, error]
         print("ROLLEDBACK")
+        return [1, error]
 
     print("bottom of insert")
     return [0]
