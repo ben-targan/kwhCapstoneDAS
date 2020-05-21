@@ -248,7 +248,7 @@ def sendToSQL(data, timestamp):
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
     for key in data:
-        sql="INSERT INTO data VALUES (" + timestamp +",\""+ str(key) + "\",\"" + str(data[key]) + "\");"
+        sql="INSERT INTO data VALUES (\"" + timestamp +"\",\""+ str(key) + "\",\"" + str(data[key]) + "\");"
         print("going into insert")
         INSERT(sql)
         # if DEBUG: log(sql)
