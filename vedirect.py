@@ -221,8 +221,8 @@ def INSERT(sql):
     print("in insert---")
     db = MySQLdb.connect('localhost','pi','','test')
     cursor = db.cursor()
+    result = cursor.execute(sql)
     try:
-        result = cursor.execute(sql)
         db.commit()
         cursor.close()
         db.close()
