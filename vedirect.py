@@ -9,7 +9,7 @@ import subprocess
 import time
 
 # KWH debug, spans system
-DEBUG = int(config_var['DEBUG'])
+# DEBUG = int(config_var['DEBUG'])
 
 # Log function
 def log(logText):
@@ -246,7 +246,7 @@ def sendToSQL(data, timestamp):
     for key in data:
         sql="INSERT INTO data VALUES (" + timestamp +","+ key.encode("utf-8") + "," + data[key].encode("utf-8") + ");"
         INSERT(sql)
-        if DEBUG: log(sql)
+        # if DEBUG: log(sql)
 
 
 def printToConsole(data, timestamp):
