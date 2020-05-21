@@ -226,12 +226,14 @@ def INSERT(sql):
         db.commit()
         cursor.close()
         db.close()
+        print("SENT")
         
     except MySQLdb.Error as error:
         db.rollback()
         cursor.close()
         db.close()
         return [1, error]
+        print("ROLLEDBACK")
 
     return [0]
 
@@ -245,6 +247,7 @@ def sendToSQL(data, timestamp):
 
     for key in data:
         sql="INSERT INTO data VALUES (" + timestamp +","+ key.encode("utf-8") + "," + data[key].encode("utf-8") + ");"
+        print("going into insert")
         INSERT(sql)
         # if DEBUG: log(sql)
 
