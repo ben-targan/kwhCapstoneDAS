@@ -234,7 +234,7 @@ def printToConsole(data, timestamp):
 
     print("-----------------------------------------------------")
     for key in data:
-        print("%s : %s" % (key.encode("utf-8"), data[key].encode("utf-8")))
+        print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), data[key].encode("utf-8")))
     print("-----------------------------------------------------")
 
 
