@@ -243,6 +243,8 @@ def sendToSQL(data, timestamp):
 
     # insert in format timestamp, label, value
 
+    timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+
     for key in data:
         sql="INSERT INTO data VALUES (" + timestamp +",\""+ str(key) + "\",\"" + str(data[key]) + "\");"
         print("going into insert")
