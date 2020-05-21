@@ -218,7 +218,7 @@ def convertKeys(data):
 def INSERT(sql):
     import MySQLdb
     from MySQLdb import Error
-
+    print("in insert---")
     try:
         db = MySQLdb.connect('localhost','pi','','kwh')
         cursor = db.cursor()
