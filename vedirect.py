@@ -220,7 +220,7 @@ def INSERT(sql):
     from MySQLdb import Error
     print("in insert---")
     try:
-        db = MySQLdb.connect('localhost','pi','','kwh')
+        db = MySQLdb.connect('localhost','pi','','test')
         cursor = db.cursor()
         result = cursor.execute(sql)
         db.commit()
