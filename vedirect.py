@@ -242,7 +242,6 @@ def sendToSQL(data, timestamp):
     data = convertKeys(data)
 
     # insert in format timestamp, label, value
-    DB = KWH_MySQL.KWH_MySQL()
 
     for key in data:
         sql="INSERT INTO data VALUES (" + timestamp +","+ key.encode("utf-8") + "," + data[key].encode("utf-8") + ");"
