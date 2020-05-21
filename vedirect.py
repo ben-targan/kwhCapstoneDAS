@@ -247,7 +247,7 @@ def sendToSQL(data, timestamp):
     # insert in format timestamp, label, value
 
     for key in data:
-        sql="INSERT INTO data VALUES (" + timestamp +",\""+ str(key) + "\"," + str(data[key]) + ");"
+        sql="INSERT INTO data VALUES (" + timestamp +",\""+ str(key) + "\",\"" + str(data[key]) + "\");"
         print("going into insert")
         INSERT(sql)
         # if DEBUG: log(sql)
