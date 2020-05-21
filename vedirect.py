@@ -235,6 +235,7 @@ def INSERT(sql):
         return [1, error]
         print("ROLLEDBACK")
 
+    print("bottom of insert")
     return [0]
 
 
