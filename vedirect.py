@@ -184,22 +184,22 @@ def convertKeys(data):
     keysDict = {
         "PPV" : "PV Array Power",
         "VPV" : "PV Array Voltage",
-        "LOAD" : "Load",
-        "H19" : "h19",
-        "Relay" : "Relay",
+        # "LOAD" : "Load",
+        # "H19" : "h19",
+        # "Relay" : "Relay",
         "ERR" : "Error #",
-        "FW" : "FW",
+        # "FW" : "FW",
         "I" : "Main Current",
-        "H21" : "h21",
+        # "H21" : "h21",
         "PID" : "Process ID",
-        "H20" : "h20",
-        "H23" : "h23",
+        # "H20" : "h20",
+        # "H23" : "h23",
         "MPPT" : "Maximum Power Point",
-        "HSDS" : "HSDS",
+        # "HSDS" : "HSDS",
         "SER#" : "Serial #",
-        "V" : "Main Voltage",
-        "CS" : "CS",
-        "H22" : "h22"
+        "V" : "Main Voltage"#,
+        # "CS" : "CS",
+        # "H22" : "h22"
     }
     newdata = {}
 
@@ -250,7 +250,19 @@ def sendToSQL(data, timestamp):
 
     #TODO: fix insertion, should be easy to choose which fields are included. 
     #      Also, possibly add support for using config vars from SQL
+
+
+    excludedKeys = [
+        # keys added here will be excluded from insertion into SQL
+        "Serial #", #cannot be converted to numeric
+        "Process ID" #in HEX, & not applicable?
+    ]
+
     for key in data:
+        if key in excludedKeys:
+            continue
+
+        #TODO: if data[key] is not numeric, convert
         sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\",\"" + str(data[key]) + "\");"
         print("going into insert")
         DB.INSERT(sql)
@@ -287,6 +299,6 @@ if __name__ == '__main__':
 
     ve = vedirect(correctPort, timestamp)
     ve.read(printToConsole)
+    # ve.read(sendToSQL)
     print("Packet sent, exiting...")
     return 0;
-    # ve.read(sendToSQL)
