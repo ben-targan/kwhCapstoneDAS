@@ -160,7 +160,7 @@ class vedirect:
 
 #-----------------------------------------------------------------------------
     def read(self, sendingFunction):
-        bool foundCompletePacket = False
+        foundCompletePacket = False
         while not foundCompletePacket:
             byte = self.ser.read(1)
             if byte:
