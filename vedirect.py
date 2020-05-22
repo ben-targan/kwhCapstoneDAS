@@ -7,6 +7,7 @@ import os, serial, argparse
 import serial.tools.list_ports as listPorts
 import subprocess
 import time
+sys.path.append('/kwh/lib')
 import KWH_MySQL
 
 # KWH debug, spans system
