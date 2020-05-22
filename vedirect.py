@@ -11,6 +11,7 @@ import KWH_MySQL
 
 # KWH debug, spans system
 DEBUG = int(config_var['DEBUG'])
+# DEBUG = int(config_var['DEBUG'])
 
 # Log function
 def log(logText):
@@ -160,7 +161,8 @@ class vedirect:
 
 #-----------------------------------------------------------------------------
     def read(self, sendingFunction):
-        while True:
+        bool foundCompletePacket = False
+        while not foundCompletePacket:
             byte = self.ser.read(1)
             if byte:
                 try:
@@ -170,9 +172,8 @@ class vedirect:
                         print("NON win1252 CHAR")
                     packet = self.input(byte.decode('utf-8', errors="ignore"))
                     # packet = self.input(byte.decode('windows-1252')) #Guess another encoding, doesnt error, but inverter returns Euro sign & '/x00'
-                else:
-                    pass
                 if (packet != None):
+                    foundCompletePacket = True
                     sendingFunction(packet, self.timestamp) #packet is complete at this point. type=dict
             else:
                 print("No byte, break occured.")
@@ -214,17 +215,47 @@ def convertKeys(data):
 
 #-----------------------------------------------------------------------------
 
+
+
+# def INSERT(sql):
+#     import MySQLdb
+#     from MySQLdb import Error
+
+#     db = MySQLdb.connect('localhost','pi','','kwh')
+#     cursor = db.cursor()
+#     result = cursor.execute(sql)
+#     try:
+#         db.commit()
+#         cursor.close()
+#         db.close()
+#         print("TRY INSERT")
+        
+#     except MySQLdb.Error as error:
+#         db.rollback()
+#         cursor.close()
+#         db.close()
+#         print("ROLLBACK")
+#         return [1, error]
+
+#     return [0]
+
+
+
 def sendToSQL(data, timestamp):
 
     data = convertKeys(data)
 
     # insert in format timestamp, label, value
     DB = KWH_MySQL.KWH_MySQL()
+    # timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
+    #TODO: fix insertion, should be easy to choose which fields are included. 
+    #      Also, possibly add support for using config vars from SQL
     for key in data:
-        sql="INSERT INTO data VALUES (" + timestamp +",\""+ str(key) + "\",\"" + str(data[key]) + "\");"
+        sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\",\"" + str(data[key]) + "\");"
+        print("going into insert")
         DB.INSERT(sql)
-        if DEBUG: log(sql)
+        # if DEBUG: log(sql)
 
 
 def printToConsole(data, timestamp):
@@ -256,5 +287,7 @@ if __name__ == '__main__':
 
 
     ve = vedirect(correctPort, timestamp)
-    # ve.read(sendToSQL)
     ve.read(printToConsole)
+    print("Packet sent, exiting...")
+    return 0;
+    # ve.read(sendToSQL)
