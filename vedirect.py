@@ -313,6 +313,6 @@ if __name__ == '__main__':
 
 
     ve = vedirect(correctPort, timestamp)
-    ve.read(printToConsole)
-    # ve.read(sendToSQL)
+    # ve.read(printToConsole)
+    ve.read(sendToSQL)
     print("Packet sent, exiting...")
