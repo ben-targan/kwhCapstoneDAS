@@ -220,9 +220,9 @@ def sendToSQL(data, timestamp):
 
     # keys added here will be excluded from insertion into SQL
     excludedKeys = [
-        "Serial #", #cannot be converted to numeric
-        "Process ID", #in HEX, & not applicable?
-        "OR" #seems to only send 0x00000000 (null)
+        # "Serial #", #cannot be converted to numeric
+        # "Process ID", #in HEX, & not applicable?
+        # "OR" #seems to only send 0x00000000 (null)
     ]
 
     for key in data:
