@@ -1,7 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# =================================================
 # Charge Controller Processing
+# 2020 Capstone Team CS 20.10
+# Audrey Kan, Ben Targan, Dalena Le, Jesse DuFresne
+# =================================================
+
 import sys
 import os, serial, argparse
 import serial.tools.list_ports as listPorts
@@ -10,19 +15,18 @@ import time
 sys.path.append('/kwh/lib')
 import KWH_MySQL
 
-# KWH debug, spans system
-# DEBUG = int(config_var['DEBUG'])
+# KWH debug flag
+DEBUG = int(config_var['DEBUG'])
 
-# Log function
+# KWH Log function
 def log(logText):
     with open("/kwh/log/modbus.log", "a+") as log:
         log.write(str(int(time.time())) + ": " + logText +"\n")
 
 
-# debug flag for additional printing
-debug = False
 
 
+##############################################################################
 class vedirect:
     
     def __init__(self, serialport, timestamp):
@@ -43,6 +47,7 @@ class vedirect:
     # constants
     (HEX, WAIT_HEADER, IN_KEY, IN_VALUE, IN_CHECKSUM) = range(5)
 
+#-----------------------------------------------------------------------------
     # input loop, one byte at a time
     def input(self, byte):
         if byte == self.colon and self.currState != self.IN_CHECKSUM:
@@ -52,15 +57,11 @@ class vedirect:
         
         if self.currState == self.WAIT_HEADER:
 
-            if debug:
-                print("### In Wait, ord: ", ord(byte))
             try:
                 self.packetLen += ord(byte) #ord throws: given char arr len 0
 
             except TypeError:
-                if debug:
-                    print("Malformed packet --wait") #inverter hangs here
-
+                pass
             if byte == self.carrigeReturn:
                 self.currState = self.WAIT_HEADER
             
@@ -72,15 +73,11 @@ class vedirect:
         #---------------------------------------------------------------------
 
         elif self.currState == self.IN_KEY:
-            if debug:
-                print("### In Key")
             try:
                 self.packetLen += ord(byte)
 
             except TypeError:
-                if debug:
-                    print("Malformed packet --inkey")
-            
+                pass
             if byte == self.tab:
                 if (self.key == 'Checksum'):
                     self.currState = self.IN_CHECKSUM
@@ -96,15 +93,11 @@ class vedirect:
         #---------------------------------------------------------------------        
 
         elif self.currState == self.IN_VALUE:
-            if debug:
-                print("### In Value")
             try:
                 self.packetLen += ord(byte)
 
-            except TypeError: 
-                if debug:
-                    print("Malformed packet --invalue")
-            
+            except TypeError:
+                pass
             if byte == self.carrigeReturn:
                 self.currState = self.WAIT_HEADER
                 
@@ -120,14 +113,10 @@ class vedirect:
         #---------------------------------------------------------------------
 
         elif self.currState == self.IN_CHECKSUM:
-            if debug:
-                print("### In Checksum")
             try:
                 self.packetLen += ord(byte)
             except TypeError:
-                if debug:
-                    print("Malformed packet --checksum")
-            
+                pass
             self.key = ''
             self.value = ''
             self.currState = self.WAIT_HEADER
@@ -137,15 +126,11 @@ class vedirect:
                 return self.packetDict #VALID PACKET RETURN
 
             else:
-                if debug:
-                    print("Malformed packet --incorrect packetLen")
                 self.packetLen = 0
 
         #---------------------------------------------------------------------                
 
         elif self.currState == self.HEX:
-            if debug:
-                print("### In Hex")
             self.packetLen = 0
 
             if byte == self.newLine:
@@ -154,34 +139,32 @@ class vedirect:
         #---------------------------------------------------------------------
 
         else:
-            if debug:
-                print("### In assertionError")
             raise AssertionError()
             
 
 #-----------------------------------------------------------------------------
+
     def read(self, sendingFunction):
         foundCompletePacket = False
+        # sends one packet per execution
         while not foundCompletePacket:
             byte = self.ser.read(1)
             if byte:
                 try:
                     packet = self.input(byte.decode('windows-1252', errors="ignore"))
                 except UnicodeError:
-                    if debug:
-                        print("NON win1252 CHAR")
                     packet = self.input(byte.decode('utf-8', errors="ignore"))
-                    # packet = self.input(byte.decode('windows-1252')) #Guess another encoding, doesnt error, but inverter returns Euro sign & '/x00'
+
                 if (packet != None):
                     foundCompletePacket = True
-                    sendingFunction(packet, self.timestamp) #packet is complete at this point. type=dict
+                    sendingFunction(packet, self.timestamp)
             else:
-                print("No byte, break occured.")
+                log("No byte read over serial, break occured.")
                 break
+##############################################################################
 
-
-#-----------------------------------------------------------------------------
 def convertKeys(data):
+    # unnecessary substitutions commented out, left here to show complete packet keys
     keysDict = {
         "PPV" : "PV Array Power",
         "VPV" : "PV Array Voltage",
@@ -200,7 +183,8 @@ def convertKeys(data):
         "SER#" : "Serial #",
         "V" : "Main Voltage"#,
         # "CS" : "CS",
-        # "H22" : "h22"
+        # "H22" : "h22",
+        # "OR" : "OR"
     }
     newdata = {}
 
@@ -215,31 +199,6 @@ def convertKeys(data):
 
 #-----------------------------------------------------------------------------
 
-
-
-# def INSERT(sql):
-#     import MySQLdb
-#     from MySQLdb import Error
-
-#     db = MySQLdb.connect('localhost','pi','','kwh')
-#     cursor = db.cursor()
-#     result = cursor.execute(sql)
-#     try:
-#         db.commit()
-#         cursor.close()
-#         db.close()
-#         print("TRY INSERT")
-        
-#     except MySQLdb.Error as error:
-#         db.rollback()
-#         cursor.close()
-#         db.close()
-#         print("ROLLBACK")
-#         return [1, error]
-
-#     return [0]
-
-
 def convertNonNumeric(value):
     if value == "ON":
         return 1
@@ -247,26 +206,19 @@ def convertNonNumeric(value):
     elif value == "OFF":
         return 0
 
-    #other non numeric results?
+    #TODO: other non numeric results?
 
     #if none of these cases, already numeric
     return value
 
+#-----------------------------------------------------------------------------
 
 def sendToSQL(data, timestamp):
-
     data = convertKeys(data)
-
-    # insert in format timestamp, label, value
     DB = KWH_MySQL.KWH_MySQL()
-    # timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
-    #TODO: fix insertion, should be easy to choose which fields are included. 
-    #      Also, possibly add support for using config vars from SQL
-
-
+    # keys added here will be excluded from insertion into SQL
     excludedKeys = [
-        # keys added here will be excluded from insertion into SQL
         "Serial #", #cannot be converted to numeric
         "Process ID", #in HEX, & not applicable?
         "OR" #seems to only send 0x00000000 (null)
@@ -275,15 +227,14 @@ def sendToSQL(data, timestamp):
     for key in data:
         if key in excludedKeys:
             continue
-
-        #TODO: if data[key] is not numeric, convert
         value = convertNonNumeric(data[key])
+
         sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\",\"" + str(value) + "\");"
-        print("going into insert")
         DB.INSERT(sql)
-        # if DEBUG: log(sql)
+        if DEBUG: log(sql)
 
-
+#-----------------------------------------------------------------------------
+# for debugging
 def printToConsole(data, timestamp):
 
     data = convertKeys(data)
@@ -293,7 +244,7 @@ def printToConsole(data, timestamp):
         print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), data[key].encode("utf-8")))
     print("-----------------------------------------------------")
 
-
+#-----------------------------------------------------------------------------
 
 if __name__ == '__main__':
     correctPort = ''
@@ -306,13 +257,14 @@ if __name__ == '__main__':
             correctPort = port.device
 
 
-    #TODO: add logging
     if correctPort == '':
         log("Serial Port for Charge Controller not found, exiting...")
         sys.exit(0)
 
 
     ve = vedirect(correctPort, timestamp)
-    # ve.read(printToConsole)
-    ve.read(sendToSQL)
-    print("Packet sent, exiting...")
+
+    # swap sendToSQL with printToConsole for debugging
+    ve.read(sendToSQL) 
+
+    log("Packet sent, exiting...")
