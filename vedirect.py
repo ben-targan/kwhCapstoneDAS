@@ -301,4 +301,3 @@ if __name__ == '__main__':
     ve.read(printToConsole)
     # ve.read(sendToSQL)
     print("Packet sent, exiting...")
-    return 0;
