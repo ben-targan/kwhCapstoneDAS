@@ -10,7 +10,6 @@ import time
 import KWH_MySQL
 
 # KWH debug, spans system
-DEBUG = int(config_var['DEBUG'])
 # DEBUG = int(config_var['DEBUG'])
 
 # Log function
