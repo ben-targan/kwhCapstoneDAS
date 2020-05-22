@@ -15,7 +15,8 @@ import time
 sys.path.append('/kwh/lib')
 import KWH_MySQL
 
-# KWH debug flag
+# Load environment variables for KWH debug flag
+exec(open("/kwh/config/get_config.py").read())
 DEBUG = int(config_var['DEBUG'])
 
 # KWH Log function
