@@ -240,6 +240,18 @@ def convertKeys(data):
 #     return [0]
 
 
+def convertNonNumeric(value):
+    if value == "ON":
+        return 1
+
+    elif value == "OFF":
+        return 0
+
+    #other non numeric results?
+
+    #if none of these cases, already numeric
+    return value
+
 
 def sendToSQL(data, timestamp):
 
@@ -256,7 +268,8 @@ def sendToSQL(data, timestamp):
     excludedKeys = [
         # keys added here will be excluded from insertion into SQL
         "Serial #", #cannot be converted to numeric
-        "Process ID" #in HEX, & not applicable?
+        "Process ID", #in HEX, & not applicable?
+        "OR" #seems to only send 0x00000000 (null)
     ]
 
     for key in data:
@@ -264,7 +277,8 @@ def sendToSQL(data, timestamp):
             continue
 
         #TODO: if data[key] is not numeric, convert
-        sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\",\"" + str(data[key]) + "\");"
+        value = convertNonNumeric(data[key])
+        sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\",\"" + str(value) + "\");"
         print("going into insert")
         DB.INSERT(sql)
         # if DEBUG: log(sql)
