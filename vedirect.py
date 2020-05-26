@@ -239,6 +239,7 @@ def sendToSQL(data, timestamp):
             sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\"," + str(value) + ");"
         
 
+        print(sql) # REMOVE DEBUG PRINT
         DB.INSERT(sql)
         if DEBUG: log(sql)
 
