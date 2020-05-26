@@ -244,7 +244,14 @@ def printToConsole(data, timestamp):
 
     print("-----------------------------------------------------")
     for key in data:
-        print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), data[key].encode("utf-8")))
+        if key == "PID":
+            hexString = data[key]
+            hexString = hexString[2:]
+            bytesObject = bytes.fromhex(hexString)
+            asciiString = bytesObject.decode("ASCII")
+            print("$$$$$$ PID: %s" % asciiString)
+        else:    
+            print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), data[key].encode("utf-8")))
     print("-----------------------------------------------------")
 
 #-----------------------------------------------------------------------------
@@ -268,6 +275,6 @@ if __name__ == '__main__':
     ve = vedirect(correctPort, timestamp)
 
     # swap sendToSQL with printToConsole for debugging
-    ve.read(sendToSQL) 
+    ve.read(printToConsole) 
 
     log("Packet sent, exiting...")
