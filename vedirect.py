@@ -244,10 +244,10 @@ def printToConsole(data, timestamp):
 
     print("-----------------------------------------------------")
     for key in data:
-        if key == "ProcessID":
+        if data[key][:2] == "0x":
             hexString = data[key]
             i  = int(hexString, 16)
-            print("$$$$ ProcessID: %s" % str(i))
+            print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), str(i)))
 
         else:    
             print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), data[key].encode("utf-8")))
