@@ -239,7 +239,6 @@ def sendToSQL(data, timestamp):
             sql="INSERT INTO data VALUES (" + str(timestamp) +",\""+ str(key) + "\"," + str(value) + ");"
         
 
-        print(sql) # REMOVE DEBUG PRINT
         DB.INSERT(sql)
         if DEBUG: log(sql)
 
@@ -255,10 +254,6 @@ def printToConsole(data, timestamp):
         if data[key][:2] == "0x":
             i  = int(data[key], 16)
             print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), str(i)))
-            # ##########################################
-            print(type(i))
-            print("type of i^")
-            # debug printing^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         else:
             value = convertNonNumeric(data[key])    
             print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), str(value)))
