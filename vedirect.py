@@ -261,19 +261,20 @@ def printToConsole(data, timestamp):
 #-----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    correctPort = ''
     timestamp = sys.argv[1]
+    correctPort = ''
+    
+    while correctPort == '':
+        
+        possiblePorts = listPorts.comports()
 
-    possiblePorts = listPorts.comports()
-
-    for port in possiblePorts:
-        if port.description == 'VE Direct cable':
-            correctPort = port.device
+        for port in possiblePorts:
+            if port.description == 'VE Direct cable':
+                correctPort = port.device
 
 
-    if correctPort == '':
-        log("Serial Port for Charge Controller not found, exiting...")
-        sys.exit(0)
+        if correctPort == '':
+            log("Serial Port for Charge Controller not found, retrying...")
 
 
     ve = vedirect(correctPort, timestamp)
