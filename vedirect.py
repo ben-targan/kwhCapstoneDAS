@@ -280,6 +280,6 @@ if __name__ == '__main__':
     ve = vedirect(correctPort, timestamp)
 
     # swap sendToSQL with printToConsole for debugging
-    ve.read(sendToSQL) 
+    ve.read(printToConsole) 
 
     log("Packet sent, exiting...")
