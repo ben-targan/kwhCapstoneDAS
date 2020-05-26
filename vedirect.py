@@ -177,7 +177,7 @@ def convertKeys(data):
         # "FW" : "FW",
         "I" : "MainCurrent",
         # "H21" : "h21",
-        "PID" : "ProcessID",
+        # "PID" : "PID",
         # "H20" : "h20",
         # "H23" : "h23",
         "MPPT" : "MaximumPowerPoint",
