@@ -230,10 +230,18 @@ def sendToSQL(data, timestamp):
     for key in data:
         if key in excludedKeys:
             continue
-        value = convertNonNumeric(data[key])
 
-        sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\",\"" + str(value) + "\");"
-        DB.INSERT(sql)
+        # if value is hex, convert it to decimal
+        if data[key][:2] == "0x":
+            i  = int(data[key], 16)
+            sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\",\"" + str(i) + "\");"
+
+        else:
+            value = convertNonNumeric(data[key])
+
+            sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\",\"" + str(value) + "\");"
+            DB.INSERT(sql)
+        
         if DEBUG: log(sql)
 
 #-----------------------------------------------------------------------------
@@ -244,13 +252,13 @@ def printToConsole(data, timestamp):
 
     print("-----------------------------------------------------")
     for key in data:
+        # if value is hex, convert it to decimal
         if data[key][:2] == "0x":
-            hexString = data[key]
-            i  = int(hexString, 16)
+            i  = int(data[key], 16)
             print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), str(i)))
-
-        else:    
-            print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), data[key].encode("utf-8")))
+        else:
+            value = convertNonNumeric(data[key])    
+            print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), value.encode("utf-8")))
     print("-----------------------------------------------------")
 
 #-----------------------------------------------------------------------------
