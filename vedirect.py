@@ -244,7 +244,7 @@ def printToConsole(data, timestamp):
 
     print("-----------------------------------------------------")
     for key in data:
-        if key == "PID":
+        if key == "ProcessID":
             hexString = data[key]
             hexString = hexString[2:]
             bytesObject = bytes.fromhex(hexString)
