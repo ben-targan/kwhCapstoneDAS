@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Built and tested with Python 2.7.13
 
 # =================================================
 # Charge Controller Processing
