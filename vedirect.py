@@ -237,8 +237,9 @@ def sendToSQL(data, timestamp):
             value = convertNonNumeric(data[key])
 
             sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\",\"" + str(value) + "\");"
-            DB.INSERT(sql)
         
+
+        DB.INSERT(sql)
         if DEBUG: log(sql)
 
 #-----------------------------------------------------------------------------
