@@ -221,7 +221,7 @@ def sendToSQL(data, timestamp):
 
     # keys added here will be excluded from insertion into SQL
     excludedKeys = [
-        "Serial", #cannot be converted to numeric
+        "Serial"#cannot be converted to numeric
     ]
 
     for key in data:
@@ -231,12 +231,12 @@ def sendToSQL(data, timestamp):
         # if value is hex, convert it to decimal
         if data[key][:2] == "0x":
             i  = int(data[key], 16)
-            sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\",\"" + str(i) + "\");"
+            sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\"," + str(i) + ");"
 
         else:
             value = convertNonNumeric(data[key])
 
-            sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\",\"" + str(value) + "\");"
+            sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\"," + str(value) + ");"
         
 
         DB.INSERT(sql)
