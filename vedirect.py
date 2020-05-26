@@ -168,22 +168,22 @@ class vedirect:
 def convertKeys(data):
     # unnecessary substitutions commented out, left here to show complete packet keys
     keysDict = {
-        "PPV" : "PV Array Power",
-        "VPV" : "PV Array Voltage",
+        "PPV" : "PVArrayPower",
+        "VPV" : "PVArrayVoltage",
         # "LOAD" : "Load",
         # "H19" : "h19",
         # "Relay" : "Relay",
-        "ERR" : "Error #",
+        "ERR" : "Error",
         # "FW" : "FW",
-        "I" : "Main Current",
+        "I" : "MainCurrent",
         # "H21" : "h21",
-        "PID" : "Process ID",
+        "PID" : "ProcessID",
         # "H20" : "h20",
         # "H23" : "h23",
-        "MPPT" : "Maximum Power Point",
+        "MPPT" : "MaximumPowerPoint",
         # "HSDS" : "HSDS",
-        "SER#" : "Serial #",
-        "V" : "Main Voltage"#,
+        "SER#" : "Serial",
+        "V" : "MainVoltage"#,
         # "CS" : "CS",
         # "H22" : "h22",
         # "OR" : "OR"
@@ -221,8 +221,9 @@ def sendToSQL(data, timestamp):
 
     # keys added here will be excluded from insertion into SQL
     excludedKeys = [
-        # "Serial #", #cannot be converted to numeric
+        "Serial #", #cannot be converted to numeric
         # "Process ID", #in HEX, & not applicable?
+        # TODO: TRANSLATE PID from hex
         # "OR" #seems to only send 0x00000000 (null)
     ]
 
