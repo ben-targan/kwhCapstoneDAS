@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Built and tested with Python 2.7.13
 
 # =================================================
 # Charge Controller Processing
@@ -167,22 +168,22 @@ class vedirect:
 def convertKeys(data):
     # unnecessary substitutions commented out, left here to show complete packet keys
     keysDict = {
-        "PPV" : "PV Array Power",
-        "VPV" : "PV Array Voltage",
+        "PPV" : "PVArrayPower",
+        "VPV" : "PVArrayVoltage",
         # "LOAD" : "Load",
         # "H19" : "h19",
         # "Relay" : "Relay",
-        "ERR" : "Error #",
+        "ERR" : "Error",
         # "FW" : "FW",
-        "I" : "Main Current",
+        "I" : "MainCurrent",
         # "H21" : "h21",
-        "PID" : "Process ID",
+        # "PID" : "PID",
         # "H20" : "h20",
         # "H23" : "h23",
-        "MPPT" : "Maximum Power Point",
+        "MPPT" : "MaximumPowerPoint",
         # "HSDS" : "HSDS",
-        "SER#" : "Serial #",
-        "V" : "Main Voltage"#,
+        "SER#" : "Serial",
+        "V" : "MainVoltage"#,
         # "CS" : "CS",
         # "H22" : "h22",
         # "OR" : "OR"
@@ -220,17 +221,24 @@ def sendToSQL(data, timestamp):
 
     # keys added here will be excluded from insertion into SQL
     excludedKeys = [
-        # "Serial #", #cannot be converted to numeric
-        # "Process ID", #in HEX, & not applicable?
-        # "OR" #seems to only send 0x00000000 (null)
+        "Serial"#cannot be converted to numeric
     ]
 
     for key in data:
         if key in excludedKeys:
             continue
-        value = convertNonNumeric(data[key])
 
-        sql="INSERT INTO data VALUES (\"" + str(timestamp) +"\",\""+ str(key) + "\",\"" + str(value) + "\");"
+        # if value is hex, convert it to decimal
+        if data[key][:2] == "0x":
+            i  = int(data[key], 16)
+            sql="INSERT INTO data VALUES (" + str(timestamp) +",\""+ str(key) + "\"," + str(i) + ");"
+
+        else:
+            value = convertNonNumeric(data[key])
+
+            sql="INSERT INTO data VALUES (" + str(timestamp) +",\""+ str(key) + "\"," + str(value) + ");"
+        
+
         DB.INSERT(sql)
         if DEBUG: log(sql)
 
@@ -242,25 +250,32 @@ def printToConsole(data, timestamp):
 
     print("-----------------------------------------------------")
     for key in data:
-        print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), data[key].encode("utf-8")))
+        # if value is hex, convert it to decimal
+        if data[key][:2] == "0x":
+            i  = int(data[key], 16)
+            print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), str(i)))
+        else:
+            value = convertNonNumeric(data[key])    
+            print("(%s)%s : %s" % (timestamp, key.encode("utf-8"), str(value)))
     print("-----------------------------------------------------")
 
 #-----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    correctPort = ''
     timestamp = sys.argv[1]
+    correctPort = ''
+    
+    while correctPort == '':
+        
+        possiblePorts = listPorts.comports()
 
-    possiblePorts = listPorts.comports()
-
-    for port in possiblePorts:
-        if port.description == 'VE Direct cable':
-            correctPort = port.device
+        for port in possiblePorts:
+            if port.description == 'VE Direct cable':
+                correctPort = port.device
 
 
-    if correctPort == '':
-        log("Serial Port for Charge Controller not found, exiting...")
-        sys.exit(0)
+        if correctPort == '':
+            log("Serial Port for Charge Controller not found, retrying...")
 
 
     ve = vedirect(correctPort, timestamp)
