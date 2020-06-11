@@ -14,29 +14,29 @@ This python script is based on a script found in this repo: <https://github.com/
 ### `vedirect` Class Method Descriptions:
 The methods in this class have to do with reading from the charge controller and assembling data for sending. All transformation of the data and the actual sending take place outside of this class.
  - **`__init__(self, serialport, timestamp)`**: 
-  - Constructor.  Opens a serial connection on `serialport` (which is accessible through `self.ser`)
-  - `timestamp` is the timestamp read from the command line, it is stored in `self.timestamp` for later sending.
+   - Constructor.  Opens a serial connection on `serialport` (which is accessible through `self.ser`)
+   - `timestamp` is the timestamp read from the command line, it is stored in `self.timestamp` for later sending.
 
 
  - **`input(self, byte)`**:
-  - The provided `byte` is processed to determine where it fits within the packet.  
-  - This method will return None until it has assembled a complete packet byte by byte.  
-  - Once the packet is complete, it is returned as a dictionary.
-  - **note: this method should only be called from `read()`** because each time `input()` is executed, class variables are modified to track the state and store the partial packet.
+   - The provided `byte` is processed to determine where it fits within the packet.  
+   - This method will return None until it has assembled a complete packet byte by byte.  
+   - Once the packet is complete, it is returned as a dictionary.
+   - **note: this method should only be called from `read()`** because each time `input()` is executed, class variables are modified to track the state and store the partial packet.
 
  - **`read(self, sendingFunction)`**:
-  - `sendingFunction` is the output destination after a packet has been received
-  - `read()` repeatedly calls `input()` until it returns the packet dictionary.  
-  - The output stream is specified through an argument to allow for flexibility; it keeps any notion of where this packet is going outside the `vedirect` class.  This allows us to swap output destinations easily, which can be helpful for debugging or software evolution.
-  - `read()` also provides the timestamp stored in `self.timestamp` to the `sendingFunction`  
+   - `sendingFunction` is the output destination after a packet has been received
+   - `read()` repeatedly calls `input()` until it returns the packet dictionary.  
+   - The output stream is specified through an argument to allow for flexibility; it keeps any notion of where this packet is going outside the `vedirect` class.  This allows us to swap output destinations easily, which can be helpful for debugging or software evolution.
+   - `read()` also provides the timestamp stored in `self.timestamp` to the `sendingFunction`  
 
 
 ### Sending Method Descriptions: 
 These methods are called after the packet from the charge controller has been assembled.  They transform the key/value pairs and send them off to MySQL or display them for debugging.
  - **`convertKeys(data)`**:
-  - `data` is the completed packet assembled by `input()`.
-  - Key names are converted for readability in this method.  The keys changed are specified in `keysDict`,  as: `{"ToReplace" : "ReplaceWith"}`
-  - Keys in `data` which are not in `keysDict` are left as is.
+   - `data` is the completed packet assembled by `input()`.
+   - Key names are converted for readability in this method.  The keys changed are specified in `keysDict`,  as: `{"ToReplace" : "ReplaceWith"}`
+   - Keys in `data` which are not in `keysDict` are left as is.
 
  - **`convertNonNumeric(value)`**:
    - This is a simple method which converts string values into numerical.
@@ -58,7 +58,7 @@ These methods are called after the packet from the charge controller has been as
 
 
 
-##Debugging help
+## Debugging help
  - Toward the end of main, at the bottom of the file, we see `ve.read(sendToSQL)`, which is the call that begins the process of reading and sending a packet. We can swap `sendToSQL` with `printToConsole` if for some reason we want to inspect the output and avoid inserting it into the db.  
 
  - The byte-by-byte processing in `input()` can only be triggered if a Serial connection with  VE.Direct cable is available.
