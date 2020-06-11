@@ -6,7 +6,7 @@ It was created for <u>Kilowatts for Humanity</u> by CS Capstone team 20.10:
 
 
 ## General Information 
-- this python script is based on a script found in this repo: <https://github.com/karioja/vedirect>
+This python script is based on a script found in this repo: <https://github.com/karioja/vedirect>
 
 ***The following is a list of all methods in the file in the order they appear:***
 
