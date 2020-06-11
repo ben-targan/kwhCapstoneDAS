@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Built and tested with Python 2.7.13
+# Originally adapted from: https://github.com/karioja/vedirect
 
 # =================================================
 # Charge Controller Processing
@@ -8,7 +9,7 @@
 # Audrey Kan, Ben Targan, Dalena Le, Jesse DuFresne
 # =================================================
 
-# Purpose: This Python 2 script scrapes data from a Victron (ADD MODEL) 
+# Purpose: This Python 2 script scrapes data from a Victron
 #          Charge Controller(CC) and stores key(str)/value(int) pairs  
 #          into the local MariaDB (database: kwh, table: data).
 
